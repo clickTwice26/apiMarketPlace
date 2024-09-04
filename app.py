@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, abort, session, flash, request
 from flask_sqlalchemy import SQLAlchemy
 import colorama as cma
 import logging
@@ -9,7 +9,8 @@ from flask_limiter import Limiter
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from amp.models import db, User
-
+from amp.forms import *
+import amp.schemas as Schemas
 cma.init()
 
 app = Flask(__name__)
@@ -60,7 +61,22 @@ logger.addHandler(file_handler)
 
 @app.route("/")
 def index():
-    return {"message" : "Hello World"}
+    return "Welcome to apiBazar"
+
+@app.route("/login")
+def loginPage():
+    
+    return "Login Page"
+
+@app.route("/createAccount")
+def registrationPage():
+    return "Registration Page"
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return "Logged out"
+
 
 
 if __name__ == "__main__":
