@@ -17,4 +17,4 @@ class User(db.Model):
     status = db.Column(db.String(50), default='active') #[active, locked, banned]
     level = db.Column(db.Integer, default=1)
     xPoints = db.Column(db.Integer, default=0)
-
+    userAccessToken = db.Column(db.String(200), unique=True, nullable=False)

@@ -26,7 +26,11 @@ def newUsernameGenerator(emailAddress : str, fullName : str):
     username = ''.join(random.choice(characters) for _ in range(10))
     return username
 def tokenGen(type : str = "login"):
-    if type == "login":
+    if type in ["login", "register"]:
+
+        if type == "login":
+            return str(uuid.uuid4())
+    else:
         return str(uuid.uuid4())
 if __name__ == "__main__":
     print(cTime())

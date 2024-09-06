@@ -4,6 +4,7 @@ from flask_limiter import Limiter
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 
+from rich.markup import render
 from wtforms.validators import email
 
 from amp.models import db, User
@@ -65,14 +66,69 @@ formatter = logging.Formatter(DEFAULT_LOG_FORMAT)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+def sessionVerify(session : dict) -> bool:
+    try:
+        usernameSession = session.get("username")
+        loginTokenSession = session.get("loginToken")
+        if usernameSession and loginTokenSession:
+            userData = User.query.filter_by(username=usernameSession).first()
+            if userData is None:
+                return False
+            if userData.loginToken == loginTokenSession:
+                return True
+            else:
+                return False
+
+        else:
+            return False
+
+
+    except Exception as error:
+        logger.debug(error)
+        return None
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if sessionVerify(session):
+        return render_template("index.html")
+    else:
+        return redirect(url_for("loginPage"))
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def loginPage():
-    
-    return "Login Page"
+    loginForm = LoginForm()
+    if request.method == "POST":
+        if loginForm.validate_on_submit():
+            userData = User.query.filter_by(email=loginForm.email.data).first()
+            if userData is None:
+                flash("user doesn't exist", "warning")
+                return redirect(url_for("loginPage"))
+            if userData.password == loginForm.password.data:
+                try:
+
+                    newLoginToken = tokenGen(type="login")
+                    session.permanent = True
+                    newSession = {
+                        "username" : userData.username,
+                        "loginToken": newLoginToken,
+
+
+                    }
+                    session.update(newSession)
+                    userData.loginToken = newLoginToken
+                    db.session.commit()
+                    flash("login successful", "success")
+                except Exception as error:
+                    logger.error(error)
+                    flash("Something went wrong", "danger")
+                    return redirect(url_for("loginPage"))
+
+                print(session)
+                return redirect(url_for("index"))
+            else:
+                flash("wrong username or password", "danger")
+                return redirect(url_for("loginPage"))
+    return render_template("login.html", form=loginForm)
 
 @app.route("/createAccount", methods=["GET", "POST"])
 def registrationPage():
@@ -92,7 +148,8 @@ def registrationPage():
                     email = registrationForm.email.data,
                     password = registrationForm.password.data,
                     loginToken = newLoginToken,
-                    lastLoginTime = cTime("both")
+                    lastLoginTime = cTime("both"),
+                    userAccessToken = tokenGen(type="access")
                 )
                 db.session.add(newUser)
                 db.session.commit()

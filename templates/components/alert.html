@@ -1,0 +1,27 @@
+<script src="/static/js/alert.js"></script>
+{% macro alert_component(type, message, title, countdown=5, alert_id=None) %}
+    {% set colors = {
+        'info': {'bg': 'bg-blue-50', 'text': 'text-blue-800', 'dark_bg': 'dark:bg-gray-800', 'dark_text': 'dark:text-blue-400'},
+        'danger': {'bg': 'bg-red-50', 'text': 'text-red-800', 'dark_bg': 'dark:bg-gray-800', 'dark_text': 'dark:text-red-400'},
+        'success': {'bg': 'bg-green-50', 'text': 'text-green-800', 'dark_bg': 'dark:bg-gray-800', 'dark_text': 'dark:text-green-400'},
+        'warning': {'bg': 'bg-yellow-50', 'text': 'text-yellow-800', 'dark_bg': 'dark:bg-gray-800', 'dark_text': 'dark:text-yellow-300'},
+        'dark': {'bg': 'bg-gray-50', 'text': 'text-gray-800', 'dark_bg': 'dark:bg-gray-800', 'dark_text': 'dark:text-gray-300'}
+    } %}
+
+    {% if type in colors %}
+    <div id="alert-{{ alert_id }}" class="alert-box m-20 mt-2 flex items-center p-4 mb-4 text-sm {{ colors[type]['text'] }} rounded-lg {{ colors[type]['bg'] }} {{ colors[type]['dark_bg'] }} {{ colors[type]['dark_text'] }}" role="alert">
+        <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+        </svg>
+        <span class="sr-only">{{ title }} alert!</span>
+        <div>
+            <span class="font-medium">{{ title }}</span> {{ message }}
+            <span class="countdown">{{ countdown }}</span>
+        </div>
+    </div>
+    {% endif %}
+{% endmacro %}
+
+{% for category, msg in get_flashed_messages(with_categories=True) %}
+    {{ alert_component(category, msg, category | capitalize, alert_id='alert-' ~ loop.index0) }}
+{% endfor %}
