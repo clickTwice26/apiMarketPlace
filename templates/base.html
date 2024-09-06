@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}apibazar{% endblock %} | apibazar</title>
+
+  <!-- Link to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Add dark mode support (optional) -->
+
+
+  <style>
+    body {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-white dark:bg-gray-900">
+  <!-- Include the Navbar -->
+  {% include 'components/navbar.html' %}
+
+  <!-- Main content area -->
+  <div class="container mx-auto p-6">
+    {% block content %}
+      Coming Soon, Be with us!
+    {% endblock %}
+  </div>
+</body>
+</html>

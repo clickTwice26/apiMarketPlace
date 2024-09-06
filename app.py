@@ -1,16 +1,21 @@
-from flask import Flask, render_template, abort, session, flash, request
+from flask import Flask, render_template, abort, session, flash, request, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
-import colorama as cma
-import logging
-import datetime as dt
-from amp.constants import *
-import redis
 from flask_limiter import Limiter
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
+
+from wtforms.validators import email
+
 from amp.models import db, User
 from amp.forms import *
+from amp.constants import *
+import colorama as cma
+import logging
+import datetime as dt
+import redis
 import amp.schemas as Schemas
+from amp.program import newUsernameGenerator, tokenGen, cTime
+
 cma.init()
 
 app = Flask(__name__)
@@ -22,8 +27,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///apiMarketPlace.db"
 redis_connection = redis.Redis(host='localhost', port=6379, db=0)
 
-db.init_app(app)  # Initialize the database with the app
+db.init_app(app)
 migrate = Migrate(app, db, render_as_batch=True)
+app.app_context().push()
 def getSessionUsername():
     
     return session.get("username")
@@ -61,16 +67,46 @@ logger.addHandler(file_handler)
 
 @app.route("/")
 def index():
-    return "Welcome to apiBazar"
+    return render_template("index.html")
 
 @app.route("/login")
 def loginPage():
     
     return "Login Page"
 
-@app.route("/createAccount")
+@app.route("/createAccount", methods=["GET", "POST"])
 def registrationPage():
-    return "Registration Page"
+    registrationForm = RegistrationForm()
+    if request.method == "POST":
+        if registrationForm.validate_on_submit():
+            userExists = User.query.filter_by(email=registrationForm.email.data).first()
+            if userExists:
+                flash("account already exists with this email", "warning")
+                return "duplicate account"
+
+            newUsername = newUsernameGenerator(emailAddress=registrationForm.email.data, fullName=registrationForm.fullName.data)
+            newLoginToken = tokenGen(type="login")
+            try:
+                newUser = User(
+                    username = newUsername,
+                    email = registrationForm.email.data,
+                    password = registrationForm.password.data,
+                    loginToken = newLoginToken,
+                    lastLoginTime = cTime("both")
+                )
+                db.session.add(newUser)
+                db.session.commit()
+                flash("account created successfully", "success")
+            except Exception as error:
+                logger.error(error)
+                db.session.rollback()
+                flash("account creation failed. try again!", "danger")
+            finally:
+                db.session.close()
+            return redirect(url_for("loginPage"))
+        else:
+            return "error"
+    return render_template("registration.html", form=registrationForm)
 
 @app.route("/logout")
 def logout():
